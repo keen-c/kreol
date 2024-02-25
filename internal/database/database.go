@@ -1,19 +1,16 @@
 package database
 
 import (
-	"context"
 	"database/sql"
 	"fmt"
-	"log"
 	"os"
-	"time"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
 	_ "github.com/joho/godotenv/autoload"
 )
 
 type Service interface {
-	Health() map[string]string
+	Server()
 }
 
 type service struct {
@@ -29,25 +26,18 @@ var (
 )
 
 func New() Service {
-	connStr := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable", username, password, host, port, database)
+	connStr := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable",username, password, host, port, database)
 	db, err := sql.Open("pgx", connStr)
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println("error:", err)
+	}
+	err = db.Ping()
+	if err != nil {
+		fmt.Println("error:", err)
 	}
 	s := &service{db: db}
 	return s
 }
 
-func (s *service) Health() map[string]string {
-	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
-	defer cancel()
-
-	err := s.db.PingContext(ctx)
-	if err != nil {
-		log.Fatalf(fmt.Sprintf("db down: %v", err))
-	}
-
-	return map[string]string{
-		"message": "It's healthy",
-	}
+func (s *service)Server()  {
 }
